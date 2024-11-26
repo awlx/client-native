@@ -42,9 +42,10 @@ type ClientResponse struct {
 	Cmd            *exec.Cmd
 	TmpDir         string
 	HAProxyVersion string
+	SocketPath     string
 }
 
-func GetClient(t *testing.T) (*ClientResponse, error) {
+func GetClient(t *testing.T) (*ClientResponse, error) { //nolint:thelper
 	cmd := exec.Command("haproxy", "-v")
 
 	var out bytes.Buffer
@@ -72,6 +73,7 @@ func GetClient(t *testing.T) (*ClientResponse, error) {
 
 	tmpPath := path.Join(os.TempDir(), "client-native/", testName)
 	socketPath := path.Join(tmpPath, "runtime.sock")
+
 	err = os.MkdirAll(tmpPath, 0o777)
 	if err != nil {
 		return nil, err
@@ -79,7 +81,7 @@ func GetClient(t *testing.T) (*ClientResponse, error) {
 
 	cmd = exec.Command("haproxy", "-f", "haproxy.cfg")
 	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, fmt.Sprintf("SOCK_PATH=%s", socketPath))
+	cmd.Env = append(cmd.Env, "SOCK_PATH="+socketPath)
 
 	if err = cmd.Start(); err != nil {
 		return nil, err
@@ -131,5 +133,6 @@ func GetClient(t *testing.T) (*ClientResponse, error) {
 		Cmd:            cmd,
 		TmpDir:         tmpPath,
 		HAProxyVersion: version,
+		SocketPath:     socketPath,
 	}, err
 }

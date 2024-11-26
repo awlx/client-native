@@ -256,7 +256,8 @@ func ParseTCPRequestRules(t, pName string, p parser.Parser) (models.TCPRequestRu
 	return tcpReqRules, nil
 }
 
-func ParseTCPRequestRule(f types.TCPType) (rule *models.TCPRequestRule, err error) { //nolint:gocyclo,cyclop,maintidx
+func ParseTCPRequestRule(f types.TCPType) (*models.TCPRequestRule, error) { //nolint:gocyclo,cyclop,maintidx
+	var rule *models.TCPRequestRule
 	switch v := f.(type) {
 	case *tcp_types.InspectDelay:
 		return &models.TCPRequestRule{
@@ -357,6 +358,7 @@ func ParseTCPRequestRule(f types.TCPType) (rule *models.TCPRequestRule, err erro
 			rule.CondTest = a.CondTest
 		case *actions.SilentDrop:
 			rule.Action = models.TCPRequestRuleActionSilentDashDrop
+			rule.RstTTL = a.RstTTL
 			rule.Cond = a.Cond
 			rule.CondTest = a.CondTest
 		case *actions.Lua:
@@ -536,6 +538,7 @@ func ParseTCPRequestRule(f types.TCPType) (rule *models.TCPRequestRule, err erro
 			rule.CondTest = a.CondTest
 		case *actions.SilentDrop:
 			rule.Action = models.TCPRequestRuleActionSilentDashDrop
+			rule.RstTTL = a.RstTTL
 			rule.Cond = a.Cond
 			rule.CondTest = a.CondTest
 		case *actions.SendSpoeGroup:
@@ -749,6 +752,7 @@ func ParseTCPRequestRule(f types.TCPType) (rule *models.TCPRequestRule, err erro
 			rule.CondTest = a.CondTest
 		case *actions.SilentDrop:
 			rule.Action = models.TCPRequestRuleActionSilentDashDrop
+			rule.RstTTL = a.RstTTL
 			rule.Cond = a.Cond
 			rule.CondTest = a.CondTest
 		default:
@@ -760,7 +764,7 @@ func ParseTCPRequestRule(f types.TCPType) (rule *models.TCPRequestRule, err erro
 	return rule, nil
 }
 
-func SerializeTCPRequestRule(f models.TCPRequestRule, opt *options.ConfigurationOptions) (rule types.TCPType, err error) { //nolint:gocyclo,cyclop,maintidx
+func SerializeTCPRequestRule(f models.TCPRequestRule, opt *options.ConfigurationOptions) (types.TCPType, error) { //nolint:gocyclo,cyclop,maintidx
 	switch f.Type {
 	case models.TCPRequestRuleTypeConnection:
 		switch f.Action {
@@ -875,6 +879,7 @@ func SerializeTCPRequestRule(f models.TCPRequestRule, opt *options.Configuration
 		case models.TCPRequestRuleActionSilentDashDrop:
 			return &tcp_types.Connection{
 				Action: &actions.SilentDrop{
+					RstTTL:   f.RstTTL,
 					Cond:     f.Cond,
 					CondTest: f.CondTest,
 				},
@@ -1152,6 +1157,7 @@ func SerializeTCPRequestRule(f models.TCPRequestRule, opt *options.Configuration
 		case models.TCPRequestRuleActionSilentDashDrop:
 			return &tcp_types.Content{
 				Action: &actions.SilentDrop{
+					RstTTL:   f.RstTTL,
 					Cond:     f.Cond,
 					CondTest: f.CondTest,
 				},
@@ -1460,6 +1466,7 @@ func SerializeTCPRequestRule(f models.TCPRequestRule, opt *options.Configuration
 		case models.TCPRequestRuleActionSilentDashDrop:
 			return &tcp_types.Session{
 				Action: &actions.SilentDrop{
+					RstTTL:   f.RstTTL,
 					Cond:     f.Cond,
 					CondTest: f.CondTest,
 				},

@@ -22,6 +22,7 @@ import (
 	"testing"
 
 	"github.com/go-faker/faker/v4"
+	"github.com/go-faker/faker/v4/pkg/options"
 
 	jsoniter "github.com/json-iterator/go"
 )
@@ -33,7 +34,7 @@ func TestGlobalBaseEqual(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalBase
 		var result GlobalBase
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -75,11 +76,11 @@ func TestGlobalBaseEqualFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalBase
 		var result GlobalBase
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -89,6 +90,8 @@ func TestGlobalBaseEqualFalse(t *testing.T) {
 		result.ExternalCheck = !sample.ExternalCheck
 		result.Gid = sample.Gid + 1
 		result.Grace = Ptr(*sample.Grace + 1)
+		result.H1AcceptPayloadWithAnyMethod = !sample.H1AcceptPayloadWithAnyMethod
+		result.H1DoNotCloseOnInsecureTransferEncoding = !sample.H1DoNotCloseOnInsecureTransferEncoding
 		result.H2WorkaroundBogusWebsocketClients = !sample.H2WorkaroundBogusWebsocketClients
 		result.HardStopAfter = Ptr(*sample.HardStopAfter + 1)
 		result.InsecureForkWanted = !sample.InsecureForkWanted
@@ -136,7 +139,7 @@ func TestGlobalBaseDiff(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalBase
 		var result GlobalBase
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -178,11 +181,11 @@ func TestGlobalBaseDiffFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalBase
 		var result GlobalBase
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -192,6 +195,8 @@ func TestGlobalBaseDiffFalse(t *testing.T) {
 		result.ExternalCheck = !sample.ExternalCheck
 		result.Gid = sample.Gid + 1
 		result.Grace = Ptr(*sample.Grace + 1)
+		result.H1AcceptPayloadWithAnyMethod = !sample.H1AcceptPayloadWithAnyMethod
+		result.H1DoNotCloseOnInsecureTransferEncoding = !sample.H1DoNotCloseOnInsecureTransferEncoding
 		result.H2WorkaroundBogusWebsocketClients = !sample.H2WorkaroundBogusWebsocketClients
 		result.HardStopAfter = Ptr(*sample.HardStopAfter + 1)
 		result.InsecureForkWanted = !sample.InsecureForkWanted
@@ -217,7 +222,7 @@ func TestGlobalBaseDiffFalse(t *testing.T) {
 
 	for _, sample := range samples {
 		result := sample.a.Diff(sample.b)
-		if len(result) != 64 {
+		if len(result) != 66 {
 			json := jsoniter.ConfigCompatibleWithStandardLibrary
 			a, err := json.Marshal(&sample.a)
 			if err != nil {
@@ -227,7 +232,7 @@ func TestGlobalBaseDiffFalse(t *testing.T) {
 			if err != nil {
 				t.Errorf(err.Error())
 			}
-			t.Errorf("Expected GlobalBase to be different in 64 cases, but it is not (%d) %s %s", len(result), a, b)
+			t.Errorf("Expected GlobalBase to be different in 66 cases, but it is not (%d) %s %s", len(result), a, b)
 		}
 	}
 }
@@ -239,7 +244,7 @@ func TestCPUMapEqual(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample CPUMap
 		var result CPUMap
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -281,11 +286,11 @@ func TestCPUMapEqualFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample CPUMap
 		var result CPUMap
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -318,7 +323,7 @@ func TestCPUMapDiff(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample CPUMap
 		var result CPUMap
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -360,11 +365,11 @@ func TestCPUMapDiffFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample CPUMap
 		var result CPUMap
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -397,7 +402,7 @@ func TestGlobalDefaultPathEqual(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalDefaultPath
 		var result GlobalDefaultPath
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -439,11 +444,11 @@ func TestGlobalDefaultPathEqualFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalDefaultPath
 		var result GlobalDefaultPath
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -476,7 +481,7 @@ func TestGlobalDefaultPathDiff(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalDefaultPath
 		var result GlobalDefaultPath
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -518,11 +523,11 @@ func TestGlobalDefaultPathDiffFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalDefaultPath
 		var result GlobalDefaultPath
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -555,7 +560,7 @@ func TestH1CaseAdjustEqual(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample H1CaseAdjust
 		var result H1CaseAdjust
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -597,11 +602,11 @@ func TestH1CaseAdjustEqualFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample H1CaseAdjust
 		var result H1CaseAdjust
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -634,7 +639,7 @@ func TestH1CaseAdjustDiff(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample H1CaseAdjust
 		var result H1CaseAdjust
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -676,11 +681,11 @@ func TestH1CaseAdjustDiffFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample H1CaseAdjust
 		var result H1CaseAdjust
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -713,7 +718,7 @@ func TestGlobalHardenEqual(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalHarden
 		var result GlobalHarden
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -755,11 +760,11 @@ func TestGlobalHardenEqualFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalHarden
 		var result GlobalHarden
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -792,7 +797,7 @@ func TestGlobalHardenDiff(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalHarden
 		var result GlobalHarden
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -834,11 +839,11 @@ func TestGlobalHardenDiffFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalHarden
 		var result GlobalHarden
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -871,7 +876,7 @@ func TestGlobalHardenRejectPrivilegedPortsEqual(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalHardenRejectPrivilegedPorts
 		var result GlobalHardenRejectPrivilegedPorts
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -913,11 +918,11 @@ func TestGlobalHardenRejectPrivilegedPortsEqualFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalHardenRejectPrivilegedPorts
 		var result GlobalHardenRejectPrivilegedPorts
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -950,7 +955,7 @@ func TestGlobalHardenRejectPrivilegedPortsDiff(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalHardenRejectPrivilegedPorts
 		var result GlobalHardenRejectPrivilegedPorts
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -992,11 +997,11 @@ func TestGlobalHardenRejectPrivilegedPortsDiffFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalHardenRejectPrivilegedPorts
 		var result GlobalHardenRejectPrivilegedPorts
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1029,7 +1034,7 @@ func TestGlobalLogSendHostnameEqual(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalLogSendHostname
 		var result GlobalLogSendHostname
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1071,11 +1076,11 @@ func TestGlobalLogSendHostnameEqualFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalLogSendHostname
 		var result GlobalLogSendHostname
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1108,7 +1113,7 @@ func TestGlobalLogSendHostnameDiff(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalLogSendHostname
 		var result GlobalLogSendHostname
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1150,11 +1155,11 @@ func TestGlobalLogSendHostnameDiffFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample GlobalLogSendHostname
 		var result GlobalLogSendHostname
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1187,7 +1192,7 @@ func TestRuntimeAPIEqual(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample RuntimeAPI
 		var result RuntimeAPI
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1229,11 +1234,11 @@ func TestRuntimeAPIEqualFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample RuntimeAPI
 		var result RuntimeAPI
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1266,7 +1271,7 @@ func TestRuntimeAPIDiff(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample RuntimeAPI
 		var result RuntimeAPI
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1308,11 +1313,11 @@ func TestRuntimeAPIDiffFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample RuntimeAPI
 		var result RuntimeAPI
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1345,7 +1350,7 @@ func TestSetVarFmtEqual(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample SetVarFmt
 		var result SetVarFmt
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1387,11 +1392,11 @@ func TestSetVarFmtEqualFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample SetVarFmt
 		var result SetVarFmt
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1424,7 +1429,7 @@ func TestSetVarFmtDiff(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample SetVarFmt
 		var result SetVarFmt
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1466,11 +1471,11 @@ func TestSetVarFmtDiffFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample SetVarFmt
 		var result SetVarFmt
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1503,7 +1508,7 @@ func TestSetVarEqual(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample SetVar
 		var result SetVar
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1545,11 +1550,11 @@ func TestSetVarEqualFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample SetVar
 		var result SetVar
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1582,7 +1587,7 @@ func TestSetVarDiff(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample SetVar
 		var result SetVar
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1624,11 +1629,11 @@ func TestSetVarDiffFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample SetVar
 		var result SetVar
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1661,7 +1666,7 @@ func TestThreadGroupEqual(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample ThreadGroup
 		var result ThreadGroup
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1703,11 +1708,11 @@ func TestThreadGroupEqualFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample ThreadGroup
 		var result ThreadGroup
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1740,7 +1745,7 @@ func TestThreadGroupDiff(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample ThreadGroup
 		var result ThreadGroup
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
@@ -1782,11 +1787,11 @@ func TestThreadGroupDiffFalse(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		var sample ThreadGroup
 		var result ThreadGroup
-		err := faker.FakeData(&sample)
+		err := faker.FakeData(&sample, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}
-		err = faker.FakeData(&result)
+		err = faker.FakeData(&result, options.WithIgnoreInterface(true))
 		if err != nil {
 			t.Errorf(err.Error())
 		}

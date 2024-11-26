@@ -16,7 +16,6 @@
 package runtime
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -24,19 +23,18 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 
 	native_errors "github.com/haproxytech/client-native/v6/errors"
 	"github.com/haproxytech/client-native/v6/misc"
 	"github.com/haproxytech/client-native/v6/models"
 	"github.com/haproxytech/client-native/v6/runtime/options"
+	"golang.org/x/sync/singleflight"
 )
 
 // Client handles multiple HAProxy clients
 type client struct {
-	haproxyVersion *HAProxyVersion
-	options        options.RuntimeOptions
-	runtime        SingleRuntime
+	options options.RuntimeOptions
+	runtime *SingleRuntime
 }
 
 const (
@@ -47,12 +45,12 @@ const (
 	maxBufSize = 8192
 )
 
-func (c *client) initWithSockets(ctx context.Context, opt options.RuntimeOptions) error {
+func (c *client) initWithSockets(opt options.RuntimeOptions) error {
 	socketPath := opt.Socket
 
-	runtime := SingleRuntime{}
+	runtime := &SingleRuntime{}
 	masterWorkerMode := false
-	err := runtime.Init(ctx, socketPath, masterWorkerMode, opt)
+	err := runtime.Init(socketPath, masterWorkerMode, opt)
 	if err != nil {
 		return err
 	}
@@ -61,15 +59,15 @@ func (c *client) initWithSockets(ctx context.Context, opt options.RuntimeOptions
 	return nil
 }
 
-func (c *client) initWithMasterSocket(ctx context.Context, opt options.RuntimeOptions) error {
+func (c *client) initWithMasterSocket(opt options.RuntimeOptions) error {
 	masterSocketPath := opt.MasterSocketData.MasterSocketPath
 
 	if masterSocketPath == "" {
 		return errors.New("master socket not configured")
 	}
-	runtime := SingleRuntime{}
+	runtime := &SingleRuntime{}
 	masterWorkerMode := true
-	err := runtime.Init(ctx, masterSocketPath, masterWorkerMode, opt)
+	err := runtime.Init(masterSocketPath, masterWorkerMode, opt)
 	if err != nil {
 		return err
 	}
@@ -91,50 +89,59 @@ func (c *client) GetInfo() (models.ProcessInfo, error) {
 	return result, nil
 }
 
-var versionSync sync.Once //nolint:gochecknoglobals
+var (
+	haproxyVersion *HAProxyVersion        //nolint:gochecknoglobals
+	versionKey     = "version"            //nolint:gochecknoglobals
+	versionSfg     = singleflight.Group{} //nolint:gochecknoglobals
+)
 
 // GetVersion returns info from the socket
 func (c *client) GetVersion() (HAProxyVersion, error) {
 	var err error
-	versionSync.Do(func() {
+	if haproxyVersion != nil {
+		return *haproxyVersion, nil
+	}
+	_, err, _ = versionSfg.Do(versionKey, func() (interface{}, error) {
 		version := &HAProxyVersion{}
 		var response string
 		response, err = c.runtime.ExecuteRaw("show info")
 		if err != nil {
-			return
+			return HAProxyVersion{}, err
 		}
 		for _, line := range strings.Split(response, "\n") {
 			if strings.HasPrefix(line, "Version: ") {
 				err = version.ParseHAProxyVersion(strings.TrimPrefix(line, "Version: "))
 				if err != nil {
-					return
+					return HAProxyVersion{}, err
 				}
-				c.haproxyVersion = version
-				return
+				haproxyVersion = version
+				return HAProxyVersion{}, err
 			}
 			// Starting with HAProxy 3.0, there is no more "Version:" prefix.
 			if len(line) > 0 && line[0] >= '3' && line[0] <= '9' {
 				err = version.ParseHAProxyVersion(line)
 				if err == nil {
-					c.haproxyVersion = version
+					haproxyVersion = version
 				}
-				return
+				return HAProxyVersion{}, err
 			}
 		}
 		err = errors.New("version data not found")
+		return HAProxyVersion{}, err // it's dereferenced in IsVersionBiggerOrEqual
 	})
 	if err != nil {
 		return HAProxyVersion{}, err
 	}
 
-	if c.haproxyVersion == nil {
+	if haproxyVersion == nil {
 		return HAProxyVersion{}, errors.New("version data not found")
 	}
-	return *c.haproxyVersion, err
+
+	return *haproxyVersion, err
 }
 
 func (c *client) IsVersionBiggerOrEqual(minimumVersion *HAProxyVersion) bool {
-	return IsBiggerOrEqual(minimumVersion, c.haproxyVersion)
+	return IsBiggerOrEqual(minimumVersion, haproxyVersion)
 }
 
 // Reloads HAProxy's configuration file. Similar to SIGUSR2. Returns the startup logs.
@@ -145,7 +152,7 @@ func (c *client) Reload() (string, error) {
 		return "", errors.New("cannot reload: not connected to a master socket")
 	}
 	if !c.IsVersionBiggerOrEqual(&HAProxyVersion{Major: 2, Minor: 7}) {
-		return "", errors.New("cannot reload: requires HAProxy 2.7 or later")
+		return "", fmt.Errorf("cannot reload: requires HAProxy 2.7 or later but current version is %v", haproxyVersion)
 	}
 
 	output, err := c.runtime.ExecuteMaster("reload")
@@ -219,7 +226,7 @@ func (c *client) AddServer(backend, name, attributes string) error {
 		return errors.New("no valid runtime found")
 	}
 	if !c.IsVersionBiggerOrEqual(&HAProxyVersion{Major: 2, Minor: 6}) {
-		return errors.New("this operation requires HAProxy 2.6 or later")
+		return fmt.Errorf("this operation requires HAProxy 2.6 or later but current version is %v", haproxyVersion)
 	}
 	err := c.runtime.AddServer(backend, name, attributes)
 	if err != nil {
@@ -537,7 +544,7 @@ func (c *client) ClearMap(name string, forceDelete bool) error {
 			if os.IsNotExist(err) {
 				return native_errors.ErrNotFound
 			}
-			return fmt.Errorf(strings.Join([]string{err.Error(), native_errors.ErrNotFound.Error()}, " "))
+			return fmt.Errorf("%s %s", err.Error(), native_errors.ErrNotFound.Error())
 		}
 	}
 
@@ -561,7 +568,7 @@ func (c *client) ClearMapVersioned(name, version string, forceDelete bool) error
 			if os.IsNotExist(err) {
 				return native_errors.ErrNotFound
 			}
-			return fmt.Errorf(strings.Join([]string{err.Error(), native_errors.ErrNotFound.Error()}, " "))
+			return fmt.Errorf("%s %s", err.Error(), native_errors.ErrNotFound.Error())
 		}
 	}
 
@@ -627,10 +634,12 @@ func (c *client) AddMapPayload(name, payload string) error {
 	return nil
 }
 
-func parseMapPayload(entries models.MapEntries, maxBufSize int) (exceededSize bool, payload []string) {
+func parseMapPayload(entries models.MapEntries, maxBufSize int) (bool, []string) {
 	prevKV := ""
 	currKV := ""
 	data := ""
+	var payload []string
+	var exceededSize bool
 	for _, d := range entries {
 		if prevKV != "" {
 			data += prevKV
@@ -683,7 +692,7 @@ func (c *client) AddMapPayloadVersioned(name string, entries models.MapEntries) 
 		if err != nil {
 			return fmt.Errorf("%s %w", c.runtime.socketPath, err)
 		}
-		for i := 0; i < len(payload); i++ {
+		for i := range payload {
 			err = c.runtime.AddMapPayloadVersioned(version, name, payload[i])
 			if err != nil {
 				return fmt.Errorf("%s %w", c.runtime.socketPath, err)
@@ -732,15 +741,15 @@ func (c *client) AddMapEntryVersioned(version, name, key, value string) error {
 	return nil
 }
 
-func (c *client) PrepareMap(name string) (version string, err error) {
+func (c *client) PrepareMap(name string) (string, error) {
 	if !c.runtime.IsValid() {
 		return "", errors.New("no valid runtime found")
 	}
-	name, err = c.GetMapsPath(name)
+	name, err := c.GetMapsPath(name)
 	if err != nil {
 		return "", fmt.Errorf("%s %w", c.runtime.socketPath, err)
 	}
-	version, err = c.runtime.PrepareMap(name)
+	version, err := c.runtime.PrepareMap(name)
 	if err != nil {
 		return "", fmt.Errorf("%s %w", c.runtime.socketPath, err)
 	}
@@ -818,45 +827,45 @@ func (c *client) ParseMapEntriesFromFile(inputFile io.Reader, hasID bool) models
 }
 
 // GetACLFile returns a the ACL file by its ID
-func (c *client) GetACLFile(id string) (files *models.ACLFile, err error) {
+func (c *client) GetACLFile(id string) (*models.ACLFile, error) {
 	if !c.runtime.IsValid() {
 		return nil, errors.New("no valid runtime found")
 	}
 
-	files, err = c.runtime.GetACL("#" + id)
+	files, err := c.runtime.GetACL("#" + id)
 	if err != nil {
 		err = fmt.Errorf("cannot retrieve ACL file for %s: %w", id, err)
 	}
 
-	return
+	return files, err
 }
 
 // GetACLFiles returns all the ACL files
-func (c *client) GetACLFiles() (files models.ACLFiles, err error) {
+func (c *client) GetACLFiles() (models.ACLFiles, error) {
 	if !c.runtime.IsValid() {
 		return nil, errors.New("no valid runtime found")
 	}
 
-	files, err = c.runtime.ShowACLS()
+	files, err := c.runtime.ShowACLS()
 	if err != nil {
 		err = fmt.Errorf("cannot retrieve ACL files: %w", err)
 	}
 
-	return
+	return files, err
 }
 
 // GetACLFilesEntries returns all the files entries for the ACL file ID
-func (c *client) GetACLFilesEntries(id string) (files models.ACLFilesEntries, err error) {
+func (c *client) GetACLFilesEntries(id string) (models.ACLFilesEntries, error) {
 	if !c.runtime.IsValid() {
 		return nil, errors.New("no valid runtime found")
 	}
 
-	files, err = c.runtime.ShowACLFileEntries("#" + id)
+	files, err := c.runtime.ShowACLFileEntries("#" + id)
 	if err != nil {
 		err = fmt.Errorf("cannot retrieve ACL files entries for %s: %w", id, err)
 	}
 
-	return
+	return files, err
 }
 
 // AddACLFileEntry adds the value for the specified ACL file entry based on its ID
@@ -872,12 +881,12 @@ func (c *client) AddACLFileEntry(id, value string) error {
 }
 
 // GetACLFileEntry returns the specified file entry based on value and ACL file ID
-func (c *client) GetACLFileEntry(id, value string) (fileEntry *models.ACLFileEntry, err error) {
+func (c *client) GetACLFileEntry(id, value string) (*models.ACLFileEntry, error) {
 	if !c.runtime.IsValid() {
 		return nil, errors.New("no valid runtime found")
 	}
-	var fe models.ACLFilesEntries
-	if fe, err = c.runtime.ShowACLFileEntries("#" + id); err != nil {
+	fe, err := c.runtime.ShowACLFileEntries("#" + id)
+	if err != nil {
 		return nil, fmt.Errorf("cannot retrieve ACL file entries, cannot list available ACL files: %w", err)
 	}
 
@@ -888,11 +897,12 @@ func (c *client) GetACLFileEntry(id, value string) (fileEntry *models.ACLFileEnt
 		}
 	}
 
-	if fileEntry, err = c.runtime.GetACLFileEntry(id, value); err != nil {
+	fileEntry, err := c.runtime.GetACLFileEntry(id, value)
+	if err != nil {
 		err = fmt.Errorf("cannot retrieve ACL file entry for %s: %w", id, err)
 	}
 
-	return
+	return fileEntry, err
 }
 
 // DeleteACLFileEntry deletes the value for the specified ACL file entry based on its ID
@@ -935,11 +945,11 @@ func (c *client) AddACLAtomic(aclID string, entries models.ACLFilesEntries) erro
 	return nil
 }
 
-func (c *client) PrepareACL(name string) (version string, err error) {
+func (c *client) PrepareACL(name string) (string, error) {
 	if !c.runtime.IsValid() {
 		return "", errors.New("no valid runtime found")
 	}
-	version, err = c.runtime.PrepareACL(name)
+	version, err := c.runtime.PrepareACL(name)
 	if err != nil {
 		return "", fmt.Errorf("%s %w", c.runtime.socketPath, err)
 	}
@@ -976,4 +986,60 @@ func (c *client) SocketPath() string {
 
 func (c *client) IsStatsSocket() bool {
 	return !c.runtime.masterWorkerMode
+}
+
+func (c *client) NewCertEntry(filename string) error {
+	if !c.runtime.IsValid() {
+		return errors.New("no valid runtime found")
+	}
+	if err := c.runtime.NewCertEntry(filename); err != nil {
+		return fmt.Errorf("%s %w", c.runtime.socketPath, err)
+	}
+
+	return nil
+}
+
+func (c *client) SetCertEntry(filename string, payload string) error {
+	if !c.runtime.IsValid() {
+		return errors.New("no valid runtime found")
+	}
+	if err := c.runtime.SetCertEntry(filename, payload); err != nil {
+		return fmt.Errorf("%s %w", c.runtime.socketPath, err)
+	}
+
+	return nil
+}
+
+func (c *client) CommitCertEntry(filename string) error {
+	if !c.runtime.IsValid() {
+		return errors.New("no valid runtime found")
+	}
+	if err := c.runtime.CommitCertEntry(filename); err != nil {
+		return fmt.Errorf("%s %w", c.runtime.socketPath, err)
+	}
+
+	return nil
+}
+
+func (c *client) AbortCertEntry(filename string) error {
+	if !c.runtime.IsValid() {
+		return errors.New("no valid runtime found")
+	}
+	if err := c.runtime.AbortCertEntry(filename); err != nil {
+		return fmt.Errorf("%s %w", c.runtime.socketPath, err)
+	}
+
+	return nil
+}
+
+func (c *client) AddCrtListEntry(crtList string, entry CrtListEntry) error {
+	if !c.runtime.IsValid() {
+		return errors.New("no valid runtime found")
+	}
+
+	if err := c.runtime.AddCrtListEntry(crtList, entry); err != nil {
+		return fmt.Errorf("%s %w", c.runtime.socketPath, err)
+	}
+
+	return nil
 }

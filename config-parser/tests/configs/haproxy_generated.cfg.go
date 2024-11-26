@@ -543,6 +543,8 @@ backend test
   http-request set-var-fmt(req.my_var) req.fhdr(user-agent),lower
   http-request silent-drop
   http-request silent-drop if FALSE
+  http-request silent-drop rst-ttl 1
+  http-request silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
   http-request strict-mode on
   http-request strict-mode on if FALSE
   http-request tarpit
@@ -682,6 +684,8 @@ backend test
   http-response set-var-fmt(req.my_var) res.fhdr(user-agent),lower
   http-response silent-drop
   http-response silent-drop if FALSE
+  http-response silent-drop rst-ttl 1
+  http-response silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
   http-response unset-var(req.my_var)
   http-response unset-var(req.my_var) if FALSE
   http-response track-sc0 src if FALSE
@@ -883,6 +887,8 @@ backend test
   tcp-request content unset-var(sess.dn)
   tcp-request content silent-drop
   tcp-request content silent-drop if !HTTP
+  tcp-request content silent-drop rst-ttl 1
+  tcp-request content silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
   tcp-request content send-spoe-group engine group
   tcp-request content use-service lua.deny
   tcp-request content use-service lua.deny if !HTTP
@@ -930,6 +936,8 @@ backend test
   tcp-request connection set-src hdr(x-forwarded-for) if some_check
   tcp-request connection silent-drop
   tcp-request connection silent-drop if !HTTP
+  tcp-request connection silent-drop rst-ttl 1
+  tcp-request connection silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
   tcp-request connection lua.foo
   tcp-request connection lua.foo param if !HTTP
   tcp-request connection lua.foo param param1
@@ -972,6 +980,8 @@ backend test
   tcp-request session unset-var(sess.dn)
   tcp-request session silent-drop
   tcp-request session silent-drop if !HTTP
+  tcp-request session silent-drop rst-ttl 1
+  tcp-request session silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
   tcp-request session attach-srv srv1
   tcp-request session attach-srv srv1 name example.com
   tcp-request session attach-srv srv1 name example.com if exceeds_limit
@@ -1391,6 +1401,8 @@ defaults test
   http-request set-var-fmt(req.my_var) req.fhdr(user-agent),lower
   http-request silent-drop
   http-request silent-drop if FALSE
+  http-request silent-drop rst-ttl 1
+  http-request silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
   http-request strict-mode on
   http-request strict-mode on if FALSE
   http-request tarpit
@@ -1530,6 +1542,8 @@ defaults test
   http-response set-var-fmt(req.my_var) res.fhdr(user-agent),lower
   http-response silent-drop
   http-response silent-drop if FALSE
+  http-response silent-drop rst-ttl 1
+  http-response silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
   http-response unset-var(req.my_var)
   http-response unset-var(req.my_var) if FALSE
   http-response track-sc0 src if FALSE
@@ -1731,6 +1745,8 @@ defaults test
   tcp-request content unset-var(sess.dn)
   tcp-request content silent-drop
   tcp-request content silent-drop if !HTTP
+  tcp-request content silent-drop rst-ttl 1
+  tcp-request content silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
   tcp-request content send-spoe-group engine group
   tcp-request content use-service lua.deny
   tcp-request content use-service lua.deny if !HTTP
@@ -1778,6 +1794,8 @@ defaults test
   tcp-request connection set-src hdr(x-forwarded-for) if some_check
   tcp-request connection silent-drop
   tcp-request connection silent-drop if !HTTP
+  tcp-request connection silent-drop rst-ttl 1
+  tcp-request connection silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
   tcp-request connection lua.foo
   tcp-request connection lua.foo param if !HTTP
   tcp-request connection lua.foo param param1
@@ -1820,6 +1838,8 @@ defaults test
   tcp-request session unset-var(sess.dn)
   tcp-request session silent-drop
   tcp-request session silent-drop if !HTTP
+  tcp-request session silent-drop rst-ttl 1
+  tcp-request session silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
   tcp-request session attach-srv srv1
   tcp-request session attach-srv srv1 name example.com
   tcp-request session attach-srv srv1 name example.com if exceeds_limit
@@ -2186,6 +2206,8 @@ frontend test
   http-request set-var-fmt(req.my_var) req.fhdr(user-agent),lower
   http-request silent-drop
   http-request silent-drop if FALSE
+  http-request silent-drop rst-ttl 1
+  http-request silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
   http-request strict-mode on
   http-request strict-mode on if FALSE
   http-request tarpit
@@ -2245,6 +2267,7 @@ frontend test
   http-request set-fc-mark 0
   http-request set-fc-tos 0xff if TRUE
   http-request capture req.cook_cnt(FirstVisit),bool len 10
+  http-request capture str("DNS resolution failure") len 32 unless dns_successful
   http-request add-header Authorization Basic\ eC1oYXByb3h5LXJlY3J1aXRzOlBlb3BsZSB3aG8gZGVjb2RlIG1lc3NhZ2VzIG9mdGVuIGxvdmUgd29ya2luZyBhdCBIQVByb3h5LiBEbyBub3QgYmUgc2h5LCBjb250YWN0IHVz
   http-request add-header Authorisation "Basic eC1oYXByb3h5LXJlY3J1aXRzOlBlb3BsZSB3aG8gZGVjb2RlIG1lc3NhZ2VzIG9mdGVuIGxvdmUgd29ya2luZyBhdCBIQVByb3h5LiBEbyBub3QgYmUgc2h5LCBjb250YWN0IHVz"
   http-request return status 200 content-type "text/plain" string "My content" if { var(txn.myip) -m found }
@@ -2326,6 +2349,8 @@ frontend test
   http-response set-var-fmt(req.my_var) res.fhdr(user-agent),lower
   http-response silent-drop
   http-response silent-drop if FALSE
+  http-response silent-drop rst-ttl 1
+  http-response silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
   http-response unset-var(req.my_var)
   http-response unset-var(req.my_var) if FALSE
   http-response track-sc0 src if FALSE
@@ -2466,6 +2491,8 @@ frontend test
   tcp-request content unset-var(sess.dn)
   tcp-request content silent-drop
   tcp-request content silent-drop if !HTTP
+  tcp-request content silent-drop rst-ttl 1
+  tcp-request content silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
   tcp-request content send-spoe-group engine group
   tcp-request content use-service lua.deny
   tcp-request content use-service lua.deny if !HTTP
@@ -2513,6 +2540,8 @@ frontend test
   tcp-request connection set-src hdr(x-forwarded-for) if some_check
   tcp-request connection silent-drop
   tcp-request connection silent-drop if !HTTP
+  tcp-request connection silent-drop rst-ttl 1
+  tcp-request connection silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
   tcp-request connection lua.foo
   tcp-request connection lua.foo param if !HTTP
   tcp-request connection lua.foo param param1
@@ -2555,6 +2584,8 @@ frontend test
   tcp-request session unset-var(sess.dn)
   tcp-request session silent-drop
   tcp-request session silent-drop if !HTTP
+  tcp-request session silent-drop rst-ttl 1
+  tcp-request session silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
   tcp-request session attach-srv srv1
   tcp-request session attach-srv srv1 name example.com
   tcp-request session attach-srv srv1 name example.com if exceeds_limit
@@ -2590,6 +2621,7 @@ frontend test
   tcp-request content set-bc-tos 0xff if some_check
   tcp-request content set-fc-mark 0xffffffff
   tcp-request content set-fc-tos 100
+  tcp-request content capture str("DNS resolution failure") len 32 unless dns_successful
   tcp-response content lua.foo
   tcp-response content lua.foo param if !HTTP
   tcp-response content lua.foo param param1
@@ -4222,6 +4254,10 @@ var configTests = []configTest{{`  command spoa-mirror --runtime 0 --mirror-url 
 `, 3},
 	{`  http-request silent-drop if FALSE
 `, 3},
+	{`  http-request silent-drop rst-ttl 1
+`, 3},
+	{`  http-request silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
+`, 3},
 	{`  http-request strict-mode on
 `, 3},
 	{`  http-request strict-mode on if FALSE
@@ -4339,6 +4375,8 @@ var configTests = []configTest{{`  command spoa-mirror --runtime 0 --mirror-url 
 	{`  http-request set-fc-tos 0xff if TRUE
 `, 3},
 	{`  http-request capture req.cook_cnt(FirstVisit),bool len 10
+`, 1},
+	{`  http-request capture str("DNS resolution failure") len 32 unless dns_successful
 `, 1},
 	{`  http-response set-map(map.lst) %[src] %[res.hdr(X-Value)] if value
 `, 3},
@@ -4475,6 +4513,10 @@ var configTests = []configTest{{`  command spoa-mirror --runtime 0 --mirror-url 
 	{`  http-response silent-drop
 `, 3},
 	{`  http-response silent-drop if FALSE
+`, 3},
+	{`  http-response silent-drop rst-ttl 1
+`, 3},
+	{`  http-response silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
 `, 3},
 	{`  http-response unset-var(req.my_var)
 `, 3},
@@ -4822,6 +4864,10 @@ var configTests = []configTest{{`  command spoa-mirror --runtime 0 --mirror-url 
 `, 3},
 	{`  tcp-request content silent-drop if !HTTP
 `, 3},
+	{`  tcp-request content silent-drop rst-ttl 1
+`, 3},
+	{`  tcp-request content silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
+`, 3},
 	{`  tcp-request content send-spoe-group engine group
 `, 3},
 	{`  tcp-request content use-service lua.deny
@@ -4916,6 +4962,10 @@ var configTests = []configTest{{`  command spoa-mirror --runtime 0 --mirror-url 
 `, 3},
 	{`  tcp-request connection silent-drop if !HTTP
 `, 3},
+	{`  tcp-request connection silent-drop rst-ttl 1
+`, 3},
+	{`  tcp-request connection silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
+`, 3},
 	{`  tcp-request connection lua.foo
 `, 3},
 	{`  tcp-request connection lua.foo param if !HTTP
@@ -5000,6 +5050,10 @@ var configTests = []configTest{{`  command spoa-mirror --runtime 0 --mirror-url 
 `, 3},
 	{`  tcp-request session silent-drop if !HTTP
 `, 3},
+	{`  tcp-request session silent-drop rst-ttl 1
+`, 3},
+	{`  tcp-request session silent-drop rst-ttl 1 if { src,table_http_req_rate(ratelimits.agg),sub(txn.rate_limit) ge 1000 }
+`, 3},
 	{`  tcp-request session attach-srv srv1
 `, 3},
 	{`  tcp-request session attach-srv srv1 name example.com
@@ -5070,6 +5124,8 @@ var configTests = []configTest{{`  command spoa-mirror --runtime 0 --mirror-url 
 `, 3},
 	{`  tcp-request content set-fc-tos 100
 `, 3},
+	{`  tcp-request content capture str("DNS resolution failure") len 32 unless dns_successful
+`, 1},
 	{`  tcp-response content lua.foo
 `, 2},
 	{`  tcp-response content lua.foo param if !HTTP

@@ -170,6 +170,8 @@
         "grace": 10000,
         "group": "anderson",
         "h1_case_adjust_file": "/etc/headers.adjust",
+        "h1_accept_payload_with_any_method": true,
+        "h1_do_not_close_on_insecure_transfer_encoding": true,
         "h2_workaround_bogus_websocket_clients": true,
         "hard_stop_after": 2000,
         "http_client_options": {
@@ -975,7 +977,10 @@
                     "address": "192.168.1.1",
                     "id": 1234,
                     "name": "webserv",
-                    "port": 9200
+                    "port": 9200,
+                    "metadata": {
+                        "comment": "my comment"
+                    }
                 },
                 "webserv2": {
                     "cookie": "BLAH",
@@ -994,7 +999,11 @@
                     "name": "webserv2",
                     "port": 9300,
                     "pool_conn_name": "apoolconnname",
-                    "hash_key": "akey"
+                    "hash_key": "akey",
+                    "metadata": {
+                        "comment": "my structured comment",
+                        "id": "my_random_id_for_server"
+                    }
                 }
             }
         },
@@ -1880,7 +1889,6 @@
                 {
                     "cond": "unless",
                     "cond_test": "src 192.168.0.0/16",
-                    "return_content_type": "",
                     "type": "deny"
                 },
                 {
@@ -3096,6 +3104,36 @@
                     "name": "hapee",
                     "port": 1023,
                     "shard": 1
+                }
+            },
+            "tables": {
+                "t1": {
+                    "expire": "5m",
+                    "name":    "t1",
+                    "no_purge": true,
+                    "size":    "200k",
+                    "store":   "gpc0,conn_rate(30s)",
+                    "type":    "string",
+                    "type_len": 1000
+                },
+                "t2": {
+                    "expire": "5m",
+                    "name":    "t2",
+                    "no_purge": true,
+                    "size":    "200k",
+                    "store":   "gpc0,gpc1,conn_rate(30s)",
+                    "type":    "string",
+                    "type_len": 1000
+                },
+                "t9": {
+                    "expire": "5m",
+                    "name":    "t9",
+                    "no_purge": true,
+                    "size":    "200k",
+                    "store":   "gpc0,conn_rate(30s)",
+                    "type":    "string",
+                    "type_len": 1000,
+                    "write_to": "t2"
                 }
             }
         }

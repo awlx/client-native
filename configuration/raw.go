@@ -145,7 +145,7 @@ func (c *client) PostRawConfiguration(config *string, version int64, skipVersion
 		}
 		return nil
 	}
-	t := ""
+	var t string
 	if skipVersionCheck {
 		// Create impicit transaction
 		transaction, err := c.startTransaction(version, skipVersionCheck)
@@ -180,7 +180,7 @@ func (c *client) PostRawConfiguration(config *string, version int64, skipVersion
 
 	w := bufio.NewWriter(tmp)
 	if !skipVersionCheck {
-		_, _ = w.WriteString(fmt.Sprintf("# _version=%v\n%v", version, *config))
+		_, _ = w.WriteString(fmt.Sprintf("# _version=%d\n%s", version, c.dropVersionFromRaw(*config)))
 	} else {
 		_, _ = w.WriteString(*config)
 	}
@@ -193,7 +193,7 @@ func (c *client) PostRawConfiguration(config *string, version int64, skipVersion
 	}
 
 	if err := p.LoadData(tFile); err != nil {
-		return NewConfError(ErrCannotReadConfFile, fmt.Sprintf("Cannot read %s", tFile))
+		return NewConfError(ErrCannotReadConfFile, "Cannot read "+tFile)
 	}
 
 	// Do a regular commit of the transaction
@@ -202,6 +202,27 @@ func (c *client) PostRawConfiguration(config *string, version int64, skipVersion
 	}
 
 	return nil
+}
+
+// dropVersionFromRaw is used when force pushing a raw configuration with version check:
+// if the provided user input has already a version metadata it must be withdrawn.
+func (c *client) dropVersionFromRaw(input string) string {
+	scanner := bufio.NewScanner(strings.NewReader(input))
+
+	var sanitized strings.Builder
+
+	for scanner.Scan() {
+		t := scanner.Bytes()
+
+		if bytes.HasPrefix(t, []byte("# _version=")) {
+			continue
+		}
+
+		sanitized.Write(t)
+		sanitized.WriteByte('\n')
+	}
+
+	return sanitized.String()
 }
 
 func (c *client) validateConfigFile(confFile string) error {

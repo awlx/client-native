@@ -256,7 +256,8 @@ func ParseHTTPRequestRules(t, pName string, p parser.Parser) (models.HTTPRequest
 	return httpReqRules, nil
 }
 
-func ParseHTTPRequestRule(f types.Action) (rule *models.HTTPRequestRule, err error) { //nolint:gocyclo,cyclop,maintidx,gocognit
+func ParseHTTPRequestRule(f types.Action) (*models.HTTPRequestRule, error) { //nolint:gocyclo,cyclop,maintidx,gocognit
+	var rule *models.HTTPRequestRule
 	switch v := f.(type) {
 	case *http_actions.AddACL:
 		rule = &models.HTTPRequestRule{
@@ -335,6 +336,10 @@ func ParseHTTPRequestRule(f types.Action) (rule *models.HTTPRequestRule, err err
 			CondTest:  v.CondTest,
 		}
 	case *http_actions.Deny:
+		var returnContentTypePtr *string
+		if v.ContentType != "" {
+			returnContentTypePtr = &v.ContentType
+		}
 		rule = &models.HTTPRequestRule{
 			Type:                "deny",
 			Cond:                v.Cond,
@@ -342,7 +347,7 @@ func ParseHTTPRequestRule(f types.Action) (rule *models.HTTPRequestRule, err err
 			ReturnHeaders:       actionHdr2ModelHdr(v.Hdrs),
 			ReturnContent:       v.Content,
 			ReturnContentFormat: v.ContentFormat,
-			ReturnContentType:   &v.ContentType,
+			ReturnContentType:   returnContentTypePtr,
 			DenyStatus:          v.Status,
 		}
 	case *http_actions.DisableL7Retry:
@@ -388,10 +393,11 @@ func ParseHTTPRequestRule(f types.Action) (rule *models.HTTPRequestRule, err err
 		}
 	case *http_actions.Redirect:
 		var codePtr *int64
-		var code int64
 		if v.Code != "" {
-			if code, err = strconv.ParseInt(v.Code, 10, 64); err == nil {
+			if code, err := strconv.ParseInt(v.Code, 10, 64); err == nil {
 				codePtr = &code
+			} else {
+				return nil, err
 			}
 		}
 		rule = &models.HTTPRequestRule{
@@ -452,13 +458,17 @@ func ParseHTTPRequestRule(f types.Action) (rule *models.HTTPRequestRule, err err
 			CondTest:  v.CondTest,
 		}
 	case *http_actions.Return:
+		var returnContentTypePtr *string
+		if v.ContentType != "" {
+			returnContentTypePtr = &v.ContentType
+		}
 		rule = &models.HTTPRequestRule{
 			Cond:                v.Cond,
 			CondTest:            v.CondTest,
 			ReturnHeaders:       actionHdr2ModelHdr(v.Hdrs),
 			ReturnContent:       v.Content,
 			ReturnContentFormat: v.ContentFormat,
-			ReturnContentType:   &v.ContentType,
+			ReturnContentType:   returnContentTypePtr,
 			ReturnStatusCode:    v.Status,
 			Type:                "return",
 		}
@@ -701,6 +711,7 @@ func ParseHTTPRequestRule(f types.Action) (rule *models.HTTPRequestRule, err err
 		}
 	case *actions.SilentDrop:
 		rule = &models.HTTPRequestRule{
+			RstTTL:   v.RstTTL,
 			Type:     "silent-drop",
 			Cond:     v.Cond,
 			CondTest: v.CondTest,
@@ -796,10 +807,11 @@ func ParseHTTPRequestRule(f types.Action) (rule *models.HTTPRequestRule, err err
 		}
 	}
 
-	return rule, err
+	return rule, nil
 }
 
-func SerializeHTTPRequestRule(f models.HTTPRequestRule, opt *options.ConfigurationOptions) (rule types.Action, err error) { //nolint:gocyclo,gocognit,ireturn,cyclop,maintidx
+func SerializeHTTPRequestRule(f models.HTTPRequestRule, opt *options.ConfigurationOptions) (types.Action, error) { //nolint:gocyclo,gocognit,ireturn,cyclop,maintidx
+	var rule types.Action
 	switch f.Type {
 	case "add-acl":
 		rule = &http_actions.AddACL{
@@ -1200,6 +1212,7 @@ func SerializeHTTPRequestRule(f models.HTTPRequestRule, opt *options.Configurati
 		}
 	case "silent-drop":
 		rule = &actions.SilentDrop{
+			RstTTL:   f.RstTTL,
 			Cond:     f.Cond,
 			CondTest: f.CondTest,
 		}
@@ -1291,5 +1304,5 @@ func SerializeHTTPRequestRule(f models.HTTPRequestRule, opt *options.Configurati
 		}
 	}
 
-	return rule, err
+	return rule, nil
 }

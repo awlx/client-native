@@ -2164,6 +2164,18 @@ func ParseGlobalSection(p parser.Parser) (*models.Global, error) { //nolint:goco
 	}
 	global.H1CaseAdjustFile = h1CaseAdjustFile
 
+	h1AcceptPayloadWithAnyMethod, err := parseBoolOption(p, "h1-accept-payload-with-any-method")
+	if err != nil {
+		return nil, err
+	}
+	global.H1AcceptPayloadWithAnyMethod = h1AcceptPayloadWithAnyMethod
+
+	h1DoNotCloseOnInsecureTransferEncoding, err := parseBoolOption(p, "h1-do-not-close-on-insecure-transfer-encoding")
+	if err != nil {
+		return nil, err
+	}
+	global.H1DoNotCloseOnInsecureTransferEncoding = h1DoNotCloseOnInsecureTransferEncoding
+
 	h2WorkaroundBogusWebsocketClients, err := parseBoolOption(p, "h2-workaround-bogus-websocket-clients")
 	if err != nil {
 		return nil, err
@@ -2492,7 +2504,7 @@ func serializeEnvironmentOptions(p parser.Parser, options *models.EnvironmentOpt
 		options = &models.EnvironmentOptions{}
 	}
 	presetEnvs := []types.StringKeyValueC{}
-	if options.PresetEnvs != nil && len(options.PresetEnvs) > 0 {
+	if len(options.PresetEnvs) > 0 {
 		for _, presetEnv := range options.PresetEnvs {
 			if presetEnv != nil {
 				env := types.StringKeyValueC{
@@ -2508,7 +2520,7 @@ func serializeEnvironmentOptions(p parser.Parser, options *models.EnvironmentOpt
 	}
 
 	setEnvs := []types.StringKeyValueC{}
-	if options.SetEnvs != nil && len(options.SetEnvs) > 0 {
+	if len(options.SetEnvs) > 0 {
 		for _, presetEnv := range options.SetEnvs {
 			if presetEnv != nil {
 				env := types.StringKeyValueC{
@@ -2611,7 +2623,7 @@ func serializeSSLOptions(p parser.Parser, options *models.SslOptions) error { //
 	}
 
 	sslEngines := []types.SslEngine{}
-	if options.SslEngines != nil && len(options.SslEngines) > 0 {
+	if len(options.SslEngines) > 0 {
 		for _, sslEngine := range options.SslEngines {
 			if sslEngine != nil {
 				se := types.SslEngine{
@@ -2874,7 +2886,7 @@ func SerializeGlobalSection(p parser.Parser, data *models.Global, opt *options.C
 	}
 
 	pH1CaseAdjusts := []types.H1CaseAdjust{}
-	if data.H1CaseAdjusts != nil && len(data.H1CaseAdjusts) > 0 {
+	if len(data.H1CaseAdjusts) > 0 {
 		for _, caseAdjust := range data.H1CaseAdjusts {
 			if caseAdjust != nil && caseAdjust.From != nil && caseAdjust.To != nil {
 				ca := types.H1CaseAdjust{From: *caseAdjust.From, To: *caseAdjust.To}
@@ -2900,7 +2912,7 @@ func SerializeGlobalSection(p parser.Parser, data *models.Global, opt *options.C
 	}
 
 	setVars := []types.SetVar{}
-	if data.SetVars != nil && len(data.SetVars) > 0 {
+	if len(data.SetVars) > 0 {
 		for _, setVar := range data.SetVars {
 			if setVar != nil {
 				sv := types.SetVar{
@@ -2916,7 +2928,7 @@ func SerializeGlobalSection(p parser.Parser, data *models.Global, opt *options.C
 	}
 
 	setVarFmts := []types.SetVarFmt{}
-	if data.SetVarFmts != nil && len(data.SetVarFmts) > 0 {
+	if len(data.SetVarFmts) > 0 {
 		for _, setVarFmt := range data.SetVarFmts {
 			if setVarFmt != nil {
 				svf := types.SetVarFmt{
@@ -2932,7 +2944,7 @@ func SerializeGlobalSection(p parser.Parser, data *models.Global, opt *options.C
 	}
 
 	threadGroupLines := []types.ThreadGroup{}
-	if data.ThreadGroupLines != nil && len(data.ThreadGroupLines) > 0 {
+	if len(data.ThreadGroupLines) > 0 {
 		for _, threadGroupLine := range data.ThreadGroupLines {
 			if threadGroupLine != nil {
 				tgl := types.ThreadGroup{
@@ -3015,6 +3027,14 @@ func SerializeGlobalSection(p parser.Parser, data *models.Global, opt *options.C
 		return err
 	}
 
+	if err := serializeBoolOption(p, "h1-accept-payload-with-any-method", data.H1AcceptPayloadWithAnyMethod); err != nil {
+		return err
+	}
+
+	if err := serializeBoolOption(p, "h1-do-not-close-on-insecure-transfer-encoding", data.H1DoNotCloseOnInsecureTransferEncoding); err != nil {
+		return err
+	}
+
 	if err := serializeTimeoutOption(p, "hard-stop-after", data.HardStopAfter, opt); err != nil {
 		return err
 	}
@@ -3028,7 +3048,7 @@ func SerializeGlobalSection(p parser.Parser, data *models.Global, opt *options.C
 	}
 
 	httpErrCodes := []types.HTTPErrCodes{}
-	if data.HTTPErrCodes != nil && len(data.HTTPErrCodes) > 0 {
+	if len(data.HTTPErrCodes) > 0 {
 		for _, errCodes := range data.HTTPErrCodes {
 			if errCodes != nil {
 				errCode := types.HTTPErrCodes{
@@ -3045,7 +3065,7 @@ func SerializeGlobalSection(p parser.Parser, data *models.Global, opt *options.C
 	}
 
 	httpFailCodes := []types.HTTPFailCodes{}
-	if data.HTTPFailCodes != nil && len(data.HTTPFailCodes) > 0 {
+	if len(data.HTTPFailCodes) > 0 {
 		for _, failCodes := range data.HTTPFailCodes {
 			if failCodes != nil {
 				failCode := types.HTTPFailCodes{
@@ -3261,7 +3281,6 @@ func serializeOcspUpdateOptions(p parser.Parser, options *models.OcspUpdateOptio
 		if options.Httpproxy.Port != nil {
 			addr = fmt.Sprintf("%s:%d", addr, *options.Httpproxy.Port)
 		}
-
 	}
 	if err := serializeStringOption(p, "ocsp-update.httpproxy", addr); err != nil {
 		return err

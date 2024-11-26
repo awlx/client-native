@@ -1992,6 +1992,8 @@ definitions:
         pattern: ^[^\s]+$
         type: string
         x-display-name: Group
+      h1_accept_payload_with_any_method:
+        type: boolean
       h1_case_adjust:
         items:
           properties:
@@ -2009,6 +2011,8 @@ definitions:
         x-omitempty: true
       h1_case_adjust_file:
         type: string
+      h1_do_not_close_on_insecure_transfer_encoding:
+        type: boolean
       h2_workaround_bogus_websocket_clients:
         type: boolean
       hard_stop_after:
@@ -4050,6 +4054,9 @@ definitions:
           servers:
             additionalProperties:
               $ref: '#/definitions/server'
+          tables:
+            additionalProperties:
+              $ref: '#/definitions/table'
         type: object
     description: Peer Section with all it's children resources
     type: object
@@ -4189,6 +4196,9 @@ definitions:
           id:
             type: integer
             x-nullable: true
+          metadata:
+            additionalProperties:
+              type: object
           name:
             pattern: ^[^\s]+$
             type: string
@@ -4379,7 +4389,7 @@ definitions:
             value: capture
         x-display-name: Capture Len
       capture_sample:
-        pattern: ^[^\s]+$
+        pattern: ^(?:[A-Za-z]+\("([A-Za-z\s]+)"\)|[A-Za-z]+)
         type: string
         x-dependency:
           type:
@@ -4738,6 +4748,14 @@ definitions:
             value: return
         x-display-name: Return Error Code
         x-nullable: true
+      rst_ttl:
+        type: integer
+        x-dependency:
+          type:
+            required: true
+            value:
+              - silent-drop
+        x-display-name: RST TTL
       sc_expr:
         type: string
         x-dependency:
@@ -5311,6 +5329,14 @@ definitions:
             value: return
         x-display-name: Return Error Code
         x-nullable: true
+      rst_ttl:
+        type: integer
+        x-dependency:
+          type:
+            required: true
+            value:
+              - silent-drop
+        x-display-name: RST TTL
       sc_expr:
         type: string
         x-dependency:
@@ -5580,7 +5606,7 @@ definitions:
             value: capture
         x-display-name: Capture Len
       capture_sample:
-        pattern: ^[^\s]+$
+        pattern: ^(?:[A-Za-z]+\("([A-Za-z\s]+)"\)|[A-Za-z]+)
         type: string
         x-dependency:
           type:
@@ -6265,7 +6291,7 @@ definitions:
               - content
         x-display-name: Capture Length
       capture_sample:
-        pattern: ^[^\s]+$
+        pattern: ^(?:[A-Za-z]+\("([A-Za-z\s]+)"\)|[A-Za-z]+)
         type: string
         x-dependency:
           action:
@@ -6442,6 +6468,14 @@ definitions:
             value:
               - content
         x-display-name: Variable name
+      rst_ttl:
+        type: integer
+        x-dependency:
+          type:
+            required: true
+            value:
+              - silent-drop
+        x-display-name: RST TTL
       sc_idx:
         type: string
         x-dependency:
@@ -6812,6 +6846,14 @@ definitions:
             value: content
         x-display-name: Nice Value
         x-nullable: false
+      rst_ttl:
+        type: integer
+        x-dependency:
+          type:
+            required: true
+            value:
+              - silent-drop
+        x-display-name: RST TTL
       sc_expr:
         type: string
         x-dependency:
@@ -21752,7 +21794,7 @@ paths:
         - $ref: '#/parameters/transaction_id'
         - $ref: '#/parameters/version'
       produces:
-        - application/json
+        - text/plain
       responses:
         "200":
           description: Operation successful
@@ -21767,12 +21809,7 @@ paths:
               description: Configuration file version
               type: string
           schema:
-            properties:
-              data:
-                type: string
-            required:
-              - data
-            type: object
+            type: string
         default:
           $ref: '#/responses/DefaultError'
       summary: Return HAProxy configuration
@@ -21815,7 +21852,7 @@ paths:
         - $ref: '#/parameters/version'
         - $ref: '#/parameters/force_reload'
       produces:
-        - application/json
+        - text/plain
       responses:
         "201":
           description: New HAProxy configuration pushed
@@ -23135,7 +23172,7 @@ paths:
           in: formData
           name: file_upload
           type: file
-          x-mimetype: text/plain
+          x-mimetype: application/octet-stream
       responses:
         "201":
           description: General use file created with its contents
@@ -23195,7 +23232,7 @@ paths:
         - Storage
     put:
       consumes:
-        - text/plain
+        - multipart/form-data
       description: Replaces the contents of a managed general use file on disk
       operationId: replaceStorageGeneralFile
       parameters:
@@ -23204,11 +23241,11 @@ paths:
           name: name
           required: true
           type: string
-        - in: body
-          name: data
-          required: true
-          schema:
-            type: string
+        - description: General use file content
+          in: formData
+          name: file_upload
+          type: file
+          x-mimetype: application/octet-stream
         - $ref: '#/parameters/skip_reload'
         - $ref: '#/parameters/force_reload'
       produces:

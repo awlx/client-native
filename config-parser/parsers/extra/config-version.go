@@ -17,6 +17,7 @@ limitations under the License.
 package extra
 
 import (
+	stderrors "errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -46,7 +47,7 @@ func (p *ConfigVersion) Get(createIfNotExist bool) (common.ParserData, error) {
 		}
 		return p.data, nil
 	}
-	return nil, fmt.Errorf("no data")
+	return nil, stderrors.New("no data")
 }
 
 // Parse see if we have version, since it is not haproxy keyword, it's in comments
@@ -56,6 +57,11 @@ func (p *ConfigVersion) Parse(line string, parts []string, comment string) (stri
 		if len(data) < 2 {
 			return "", &errors.ParseError{Parser: "ConfigVersion", Line: line}
 		}
+
+		if p.data != nil {
+			return "", &errors.ParseError{Parser: "ConfigVersion", Line: line}
+		}
+
 		if version, err := strconv.ParseInt(data[1], 10, 64); err == nil {
 			p.data = &types.ConfigVersion{
 				Value: version,
